@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Мои записи</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+    <h1>Мои записи</h1>
+
+    {% if appointments %}
+    <ul>
+        {% for appt in appointments %}
+        <li>
+            Врач: {{ appt.doctor_name }}<br />
+            Дата и время: {{ appt.date_time }}<br />
+            Статус: {{ appt.status }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>У вас нет записей.</p>
+    {% endif %}
+
+    <a href="/">На главную</a>
+</body>
+
+</html>

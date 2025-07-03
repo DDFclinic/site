@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Вход в ASSCORP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 16px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .error {
+            color: red;
+            margin-top: 12px;
+        }
+
+        .token {
+            margin-top: 16px;
+            word-break: break-all;
+            background: #f0f0f0;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Вход в ASSCORP</h1>
+    <form id="loginForm">
+        <label for="username">Email:</label>
+        <input type="text" id="username" name="username" required />
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" name="password" required />
+        <button type="submit">Войти</button>
+    </form>
+
+    <div class="error" id="errorMsg"></div>
+    <div class="token" id="tokenDiv" style="display:none;">
+        <strong>Access Token:</strong>
+        <pre id="token"></pre>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const tokenDiv = document.getElementById('tokenDiv');
+        const tokenPre = document.getElementById('token');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.textContent = '';
+            tokenDiv.style.display = 'none';
+
+            const formData = new URLSearchParams();
+            formData.append('username', form.username.value);
+            formData.append('password', form.password.value);
+
+            try {
+                const response = await fetch('/users/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString(),
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    errorMsg.textContent = err.detail || 'Ошибка входа';
+                    return;
+                }
+
+                const data = await response.json();
+                tokenPre.textContent = data.access_token;
+                tokenDiv.style.display = 'block';
+            } catch (err) {
+                errorMsg.textContent = 'Ошибка сети или сервера';
+            }
+        });
+    </script>
+</body>
+
+</html>

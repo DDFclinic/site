@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Регистрация - ASSCORP</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+    <h1>Регистрация пациента</h1>
+    <form id="registerForm">
+        <label>Email: <input type="email" id="email" required /></label><br />
+        <label>Полное имя: <input type="text" id="full_name" required /></label><br />
+        <label>Пароль: <input type="password" id="password" required /></label><br />
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const full_name = document.getElementById('full_name').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, full_name, password })
+            });
+
+            const message = document.getElementById('message');
+
+            if (response.ok) {
+                const data = await response.json();
+                message.style.color = 'green';
+                message.textContent = `Пользователь ${data.full_name} успешно зарегистрирован!`;
+                form.reset();
+            } else {
+                const error = await response.json();
+                message.style.color = 'red';
+                message.textContent = `Ошибка регистрации: ${typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail)}`;
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+# Примечание
+# requirements.txt остортирован по алфавиту для удобного управления библиотеками
+# Просьба не нарушать это правило. 
+# Ня)
+fastapi
+install python-jose[cryptography]
+jinja2
+passlib
+psycopg2-binary
+pydantic[email]
+python-dotenv
+python-multipart
+sqlalchemy
+uvicorn
