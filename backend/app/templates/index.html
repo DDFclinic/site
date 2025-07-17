@@ -2,24 +2,181 @@
 <html lang="ru">
 
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/event-source-polyfill@1.0.20/src/eventsource.min.js"></script>
     <meta charset="UTF-8" />
-    <title>ASSCORP - Главная</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Главная</title>
+    <link rel="stylesheet" href="../static/main.css" />
+    <style>
+        /* ... (оставляем CSS как есть) ... */
+    </style>
 </head>
 
 <body>
-    <h1>Добро пожаловать в ASSCORP</h1>
+    <header class="site-header">
+        <div class="container">
+            <div class="header">
+                <h1><a href="/" style="color: white; text-decoration: none;">OSCORP</a></h1>
+            </div>
+            <nav class="site-nav" id="nav-auth">
+                <!-- Ссылки появятся через JS -->
+            </nav>
+        </div>
+    </header>
 
-    <nav>
-        <ul>
-            <li><a href="/register">Регистрация пациента</a></li>
-            <li><a href="/login">Вход</a></li>
-            <li><a href="/patient/appointments">Мои записи (пациент)</a></li>
-            <li><a href="/doctor/schedule">Расписание врача</a></li>
-            <li><a href="/admin">Админка</a></li>
-        </ul>
-    </nav>
+    <div class="main-layout">
+        <aside class="sidebar" id="sidebarLinks"></aside>
 
+        <section class="right-panel" id="mainContent">
+            <h2>Добро пожаловать в OSCORP!</h2>
+            <div id="assistantSection">
+                <!-- Контент ассистента появляется через JS -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const userEmail = localStorage.getItem("userEmail");
+
+        function renderSidebarLinks() {
+            const sidebar = document.getElementById("sidebarLinks");
+            let links = "<ul>";
+            if (userEmail) {
+                links += `<li><a href="/account">Мои записи (пациент)</a></li>`;
+            } else {
+                links += `<li><a href="/register">Регистрация пациента</a></li>`;
+                links += `<li><a href="/login">Вход</a></li>`;
+            }
+            links += "</ul>";
+            sidebar.innerHTML = links;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderSidebarLinks();
+
+            const nav = document.getElementById("nav-auth");
+            if (userEmail) {
+                nav.innerHTML = `
+                    <a href="/appointment" class="nav-link">Запись</a>
+                    <a href="/contacts" class="nav-link">Контакты</a>
+                    <a href="/account" class="nav-link">Личный кабинет</a>
+                `;
+            } else {
+                nav.innerHTML = `
+                    <a href="/appointment" class="nav-link">Запись</a>
+                    <a href="/contacts" class="nav-link">Контакты</a>
+                    <a href="/login" class="nav-link">Вход</a>
+                `;
+            }
+
+            const assistantSection = document.getElementById("assistantSection");
+
+            if (!userEmail) {
+                assistantSection.innerHTML = `<p><strong>Войдите, чтобы общаться с ассистентом.</strong></p>`;
+                return;
+            }
+
+            assistantSection.innerHTML = `
+                <h3>Ассистент</h3>
+                <div style="max-width: 600px;">
+                    <div id="chatBox"></div>
+                    <div id="inputArea">
+                        <textarea id="userMessage" rows="3" placeholder="Задайте вопрос по здоровью..."></textarea>
+                        <button id="sendButton">Отправить</button>
+                    </div>
+                </div>
+            `;
+
+            const chatBox = document.getElementById("chatBox");
+            const input = document.getElementById("userMessage");
+            const sendButton = document.getElementById("sendButton");
+
+            sendButton.addEventListener("click", sendMessage);
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            function appendMessage(text, sender) {
+                const msgDiv = document.createElement("div");
+                msgDiv.classList.add("message", sender);
+                msgDiv.textContent = text;
+                chatBox.appendChild(msgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+                return msgDiv;
+            }
+
+            async function sendMessage() {
+                const question = input.value.trim();
+                if (!question) return;
+
+                appendMessage(question, "user");
+
+                input.value = "";
+                input.disabled = true;
+                sendButton.disabled = true;
+
+                const assistantMsgDiv = document.createElement("div");
+                assistantMsgDiv.classList.add("message", "assistant");
+                const contentSpan = document.createElement("span");
+                const cursorSpan = document.createElement("span");
+                cursorSpan.classList.add("cursor");
+                cursorSpan.textContent = "|";
+
+                assistantMsgDiv.appendChild(contentSpan);
+                assistantMsgDiv.appendChild(cursorSpan);
+                chatBox.appendChild(assistantMsgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                const history = [];
+
+                try {
+                    const evtSource = new EventSourcePolyfill(
+                        `/api/ask_assistant_stream?question=${encodeURIComponent(question)}&history=${encodeURIComponent(JSON.stringify(history))}`
+                    );
+
+                    evtSource.onmessage = (event) => {
+                        if (event.data === "[DONE]") {
+                            evtSource.close();
+                            cursorSpan.remove();
+                            input.disabled = false;
+                            sendButton.disabled = false;
+                            input.focus();
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                            return;
+                        }
+
+                        contentSpan.textContent += event.data;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    };
+
+                    evtSource.onerror = (err) => {
+                        evtSource.close();
+                        cursorSpan.remove();
+                        input.disabled = false;
+                        sendButton.disabled = false;
+                        const errorMsg = document.createElement("div");
+                        errorMsg.classList.add("message", "assistant");
+                        errorMsg.style.color = "red";
+                        errorMsg.textContent = "Ошибка: Сбой соединения с ассистентом";
+                        chatBox.appendChild(errorMsg);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    };
+                } catch (e) {
+                    input.disabled = false;
+                    sendButton.disabled = false;
+                    const errorMsg = document.createElement("div");
+                    errorMsg.classList.add("message", "assistant");
+                    errorMsg.style.color = "red";
+                    errorMsg.textContent = "Ошибка: " + e.message;
+                    chatBox.appendChild(errorMsg);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

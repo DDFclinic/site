@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="../static/account.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header">
+                <h1><a href="/" style="color: white; text-decoration: none;">OSCORP</a></h1>
+            </div>
+
+            <nav class="site-nav">
+                <a href="/appointment" class="nav-link">Запись</a>
+                <a href="/contacts" class="nav-link">Контакты</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="account-container" id="accountContent">
+        Загрузка...
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("accessToken");
+            const email = localStorage.getItem("userEmail");
+            const medicalCardNumber = localStorage.getItem("medicalCardNumber");
+            const content = document.getElementById("accountContent");
+
+            if (!token) {
+                content.innerHTML = `<p>Вы не авторизованы. <a href="/login">Войти</a></p>`;
+                return;
+            }
+
+            content.innerHTML = `
+                <h2>Добро пожаловать в OSCORP!</h2>
+                <p><strong>Email:</strong> ${email || "неизвестен"}</p>
+                <p><strong>Номер медицинской карты:</strong> ${medicalCardNumber || "неизвестен"}</p>
+                <p>Вы успешно вошли в систему.</p>
+                <button onclick="logout()">Выйти</button>
+                <h3>Мои записи на приём</h3>
+                <div id="appointmentsSection">Загрузка записей...</div>
+            `;
+
+            fetchAppointments();
+
+            async function fetchAppointments() {
+                try {
+                    const res = await fetch("/api/appointments/my", {
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    });
+                    if (!res.ok) {
+                        throw new Error("Ошибка загрузки записей");
+                    }
+                    const appointments = await res.json();
+                    renderAppointments(appointments);
+                } catch (e) {
+                    document.getElementById("appointmentsSection").innerHTML = `<p>${e.message}</p>`;
+                }
+            }
+
+            function renderAppointments(appointments) {
+                if (appointments.length === 0) {
+                    document.getElementById("appointmentsSection").innerHTML = "<p>Нет записей.</p>";
+                    return;
+                }
+
+                const table = document.createElement("table");
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Врач</th>
+                            <th>Специальность</th>
+                            <th>Дата и время</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${appointments.map(a => `
+                            <tr data-id="${a.id}">
+                                <td>${a.doctor.full_name}</td>
+                                <td>${a.doctor.specialty}</td>
+                                <td>${new Date(a.appointment_time).toLocaleString()}</td>
+                                <td><button class="cancel-btn">Отменить</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                const section = document.getElementById("appointmentsSection");
+                section.innerHTML = "";
+                section.appendChild(table);
+
+                section.querySelectorAll(".cancel-btn").forEach(btn => {
+                    btn.addEventListener("click", async (e) => {
+                        const tr = e.target.closest("tr");
+                        const appointmentId = tr.getAttribute("data-id");
+                        if (confirm("Вы уверены, что хотите отменить запись?")) {
+                            await cancelAppointment(appointmentId, tr);
+                        }
+                    });
+                });
+            }
+
+            async function cancelAppointment(id, rowElement) {
+                try {
+                    const res = await fetch(`/api/appointments/${id}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    });
+                    if (!res.ok) {
+                        throw new Error("Ошибка при отмене записи");
+                    }
+                    rowElement.remove();
+                    if (document.querySelectorAll("#appointmentsSection tbody tr").length === 0) {
+                        document.getElementById("appointmentsSection").innerHTML = "<p>Нет записей.</p>";
+                    }
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("tokenType");
+            window.location.href = "/login";
+        }
+    </script>
+</body>
+
+</html>

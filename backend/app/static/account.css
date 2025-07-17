@@ -1,0 +1,103 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+
+.site-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 1rem 0;
+}
+
+.container {
+    max-width: 1850px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.site-nav .nav-link {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.site-nav .nav-link:hover {
+    color: #FFDD00; 
+}
+
+
+.account-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 3px solid #2c3e50;
+    border-radius: 16px;
+    background-color: #e6f0ff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    font-size: 20px;
+    color: #333;
+    text-align: center;
+}
+/* account.css */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+.cancel-btn {
+    padding: 6px 12px;
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background-color: #c0392b;
+}
+button {
+    padding: 10px 20px;
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+}
+
+button:hover {
+    background-color: #34495e;
+    transform: scale(1.05);
+}

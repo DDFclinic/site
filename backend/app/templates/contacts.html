@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контакты</title>
+    <link rel="stylesheet" href="../static/contacts.css">
+</head>
+
+<body>
+    <style>
+        body {
+            background-image: url('https://www.mos.ru/upload/newsfeed/newsfeed/GV1A1976.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center bottom;
+            background-position: 0px 0px;
+        }
+    </style>
+    <header class="site-header">
+        <div class="container">
+            <div class="header">
+                <h1><a href="/" style="color: white; text-decoration: none;">OSCORP</a></h1>
+            </div>
+
+            <nav class="site-nav" id="navLinks">
+                <a href="/appointment" class="nav-link">Запись</a>
+                <a href="/login" class="nav-link" id="loginLink">Вход</a>
+                <a href="/register" class="nav-link" id="registerLink">Регистрация</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="contact-card">
+        <h2>Контактная информация</h2>
+        <p><strong>Адрес:</strong> г. Москва, Судостроительная улица, 37/11, 7 этаж, кв. 42</p>
+        <p><strong>Телефон:</strong> +7 926 643 1916</p>
+        <p><strong>Email:</strong> qwertyqazerd@gmail.com</p>
+        <p><strong>График работы:</strong> Пн–Пт с 23:00 до 2:00</p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const userEmail = localStorage.getItem('userEmail');
+
+            if (userEmail) {
+                const loginLink = document.getElementById('loginLink');
+                const registerLink = document.getElementById('registerLink');
+
+                if (loginLink) loginLink.remove();
+                if (registerLink) registerLink.remove();
+
+                const nav = document.getElementById('navLinks');
+                const accountLink = document.createElement('a');
+                accountLink.href = "/account";
+                accountLink.className = "nav-link";
+                accountLink.textContent = "Личный кабинет";
+                nav.appendChild(accountLink);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Запись</title>
+    <link rel="stylesheet" href="../static/appointment.css" />
+</head>
+
+<body>
+    <style>
+        body {
+            background-image: url('https://www.mos.ru/upload/newsfeed/newsfeed/GV1A1976.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: 0 0;
+        }
+    </style>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="header">
+                <h1><a href="/" style="color: white; text-decoration: none;">OSCORP</a></h1>
+            </div>
+
+            <nav class="site-nav">
+                <a href="/contacts" class="nav-link">Контакты</a>
+                <a id="auth-link" href="/login" class="nav-link">Вход</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="doctor-list" id="doctorList">
+        Загрузка списка врачей...
+    </main>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modal-text"></p>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("modal");
+        const modalText = document.getElementById("modal-text");
+        const closeBtn = document.querySelector(".close");
+
+        function showModal(message) {
+            modalText.textContent = message;
+            modal.style.display = "flex";
+        }
+
+        closeBtn.onclick = () => (modal.style.display = "none");
+        window.onclick = e => {
+            if (e.target === modal) modal.style.display = "none";
+        };
+
+        // Генерация слотов времени (каждые 15 минут)
+        function generateTimeSlots(start = "08:00", end = "20:00", interval = 15) {
+            const result = [];
+            const [startH, startM] = start.split(":").map(Number);
+            const [endH, endM] = end.split(":").map(Number);
+            let minutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+
+            while (minutes <= endMinutes) {
+                const h = String(Math.floor(minutes / 60)).padStart(2, "0");
+                const m = String(minutes % 60).padStart(2, "0");
+                result.push(`${h}:${m}`);
+                minutes += interval;
+            }
+            return result;
+        }
+
+        // Формат даты к YYYY-MM-DD
+        function formatDate(date) {
+            return date.toISOString().split("T")[0];
+        }
+
+        // Получить токен или email текущего пользователя из localStorage (пример)
+        const userEmail = localStorage.getItem("userEmail");
+
+        // Получение занятых слотов с сервера
+        async function getOccupiedSlots(doctorId, date) {
+            try {
+                const url = `/api/appointments/occupied?doctor_id=${doctorId}&date=${date}`;
+                console.log("Запрос занятых слотов, URL:", url);
+                const res = await fetch(url);
+                if (!res.ok) {
+                    console.error("Ошибка загрузки занятых слотов", res.status);
+                    return [];
+                }
+                const data = await res.json();
+                return data;  // data уже массив строк "HH:MM"
+
+            } catch (e) {
+                console.error(e);
+                return [];
+            }
+        }
+
+
+        // Загрузка врачей и отрисовка карточек
+        document.addEventListener("DOMContentLoaded", () => {
+            const doctorList = document.getElementById("doctorList");
+            fetch("/api/doctors/")
+                .then(res => res.json())
+                .then(doctors => {
+                    doctorList.innerHTML = "";
+                    if (doctors.length === 0) {
+                        doctorList.innerHTML = "<p>Нет доступных врачей</p>";
+                        return;
+                    }
+
+                    const baseTimeOptions = generateTimeSlots();
+
+                    doctors.forEach(doc => {
+                        const fullName = doc.user?.full_name || "Неизвестный врач";
+
+                        const card = document.createElement("div");
+                        card.className = "doctor-card";
+                        card.innerHTML = `
+                            <h2>${fullName}</h2>
+                            <p class="specialty">${doc.specialty}</p>
+                            <label>Дата: <input type="date" class="date-input" min="${formatDate(new Date())}" /></label>
+                            <label>Время:
+                                <select class="time-select" disabled>
+                                    <option>Выберите дату</option>
+                                </select>
+                            </label>
+                            <button class="book-button" disabled>Записаться</button>
+                        `;
+
+                        const button = card.querySelector(".book-button");
+                        const dateInput = card.querySelector(".date-input");
+                        const timeSelect = card.querySelector(".time-select");
+
+                        function updateAvailableTimes() {
+                            const date = dateInput.value;
+                            if (!date) {
+                                timeSelect.innerHTML = `<option>Выберите дату</option>`;
+                                timeSelect.disabled = true;
+                                button.disabled = true;
+                                return;
+                            }
+
+                            getOccupiedSlots(doc.id, date).then(occupied => {
+                                console.log("Занятые слоты:", occupied);
+                                const available = baseTimeOptions.filter(t => !occupied.includes(t));
+                                console.log("Свободные слоты:", available);
+
+                                if (available.length === 0) {
+                                    timeSelect.innerHTML = `<option disabled>Нет доступного времени</option>`;
+                                    timeSelect.disabled = true;
+                                    button.disabled = true;
+                                } else {
+                                    timeSelect.innerHTML = available.map(t => `<option value="${t}">${t}</option>`).join("");
+                                    timeSelect.disabled = false;
+                                    button.disabled = false;
+                                }
+                            });
+                        }
+
+
+
+                        dateInput.addEventListener("change", updateAvailableTimes);
+
+                        button.addEventListener("click", () => {
+                            const date = dateInput.value;
+                            const time = timeSelect.value;
+
+                            if (!date || !time) {
+                                showModal(`Пожалуйста, выберите дату и время для записи к ${fullName}.`);
+                                return;
+                            }
+
+                            // Собираем данные для отправки на сервер
+                            const appointmentData = {
+                                doctor_id: doc.id,
+                                appointment_time: `${date}T${time}:00`,  // формат ISO 8601
+                            };
+
+                            // Отправка запроса на бэкенд
+                            const accessToken = localStorage.getItem("accessToken");
+
+                            fetch("/api/appointments/", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${accessToken}`
+                                },
+                                body: JSON.stringify(appointmentData)
+                            })
+                                .then(res => {
+                                    if (res.ok) {
+                                        return res.json();
+                                    } else if (res.status === 401) {
+                                        throw new Error("Неавторизован");
+                                    } else {
+                                        throw new Error("Ошибка при записи");
+                                    }
+                                })
+                                .then(data => {
+                                    showModal(`Вы успешно записались на приём к ${fullName} ${date} в ${time}`);
+                                    // Обновим доступное время после записи
+                                    updateAvailableTimes();
+                                })
+                                .catch(err => {
+                                    showModal(err.message);
+                                });
+                        });
+
+                        doctorList.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    doctorList.innerHTML = "<p>Ошибка загрузки врачей</p>";
+                });
+
+            // Замена ссылки Вход на Личный кабинет, если авторизован
+            const authLink = document.getElementById("auth-link");
+            if (userEmail) {
+                authLink.textContent = "Личный кабинет";
+                authLink.href = "/account";
+            }
+        });
+    </script>
+</body>
+
+</html>
