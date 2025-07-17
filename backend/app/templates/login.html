@@ -113,7 +113,6 @@
                 localStorage.setItem("tokenType", data.token_type);
                 localStorage.setItem("userEmail", form.username.value);
 
-                // Получение номера медкарты
                 const res = await fetch("/patient/medical_card", {
                     method: "GET",
                     headers: {

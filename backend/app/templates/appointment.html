@@ -57,8 +57,6 @@
         window.onclick = e => {
             if (e.target === modal) modal.style.display = "none";
         };
-
-        // Генерация слотов времени (каждые 15 минут)
         function generateTimeSlots(start = "08:00", end = "20:00", interval = 15) {
             const result = [];
             const [startH, startM] = start.split(":").map(Number);
@@ -75,15 +73,11 @@
             return result;
         }
 
-        // Формат даты к YYYY-MM-DD
         function formatDate(date) {
             return date.toISOString().split("T")[0];
         }
 
-        // Получить токен или email текущего пользователя из localStorage (пример)
         const userEmail = localStorage.getItem("userEmail");
-
-        // Получение занятых слотов с сервера
         async function getOccupiedSlots(doctorId, date) {
             try {
                 const url = `/api/appointments/occupied?doctor_id=${doctorId}&date=${date}`;
@@ -94,7 +88,7 @@
                     return [];
                 }
                 const data = await res.json();
-                return data;  // data уже массив строк "HH:MM"
+                return data; 
 
             } catch (e) {
                 console.error(e);
@@ -102,8 +96,6 @@
             }
         }
 
-
-        // Загрузка врачей и отрисовка карточек
         document.addEventListener("DOMContentLoaded", () => {
             const doctorList = document.getElementById("doctorList");
             fetch("/api/doctors/")
@@ -177,13 +169,13 @@
                                 return;
                             }
 
-                            // Собираем данные для отправки на сервер
+        
                             const appointmentData = {
                                 doctor_id: doc.id,
-                                appointment_time: `${date}T${time}:00`,  // формат ISO 8601
+                                appointment_time: `${date}T${time}:00`, 
                             };
 
-                            // Отправка запроса на бэкенд
+                        
                             const accessToken = localStorage.getItem("accessToken");
 
                             fetch("/api/appointments/", {
@@ -205,7 +197,7 @@
                                 })
                                 .then(data => {
                                     showModal(`Вы успешно записались на приём к ${fullName} ${date} в ${time}`);
-                                    // Обновим доступное время после записи
+                                    
                                     updateAvailableTimes();
                                 })
                                 .catch(err => {
@@ -220,8 +212,6 @@
                     console.error(err);
                     doctorList.innerHTML = "<p>Ошибка загрузки врачей</p>";
                 });
-
-            // Замена ссылки Вход на Личный кабинет, если авторизован
             const authLink = document.getElementById("auth-link");
             if (userEmail) {
                 authLink.textContent = "Личный кабинет";
