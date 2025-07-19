@@ -1,33 +1,45 @@
 # Структура файлов
 ```
+├── .env     # Переменные окружения
 ├── README.md
 ├── backend
-│ ├── Dockerfile
-│ ├── app
-│ │ ├── init.py
-│ │ ├── pycache/
-│ │ ├── auth.py
-│ │ ├── database.py
-│ │ ├── dependencies.py
-│ │ ├── main.py
-│ │ ├── models.py
-│ │ ├── routes
-│ │ │ ├── init.py
-│ │ │ ├── pycache/
-│ │ │ ├── appointments.py
-│ │ │ ├── doctors.py
-│ │ │ ├── patients.py
-│ │ │ ├── schedule.py
-│ │ │ └── users.py
-│ │ ├── schemas.py
-│ │ ├── static
-│ │ │ └── style.css
-│ │ ├── templates
-│ │ │ ├── index.html
-│ │ │ ├── login.html
-│ │ │ ├── patient_appointments.html
-│ │ └ └── register.html
-│ └── requirements.txt
+│   ├── Dockerfile
+│   ├── app
+│   │   ├── __init__.py        
+│   │   ├── __pycache__        
+│   │   ├── auth.py
+│   │   ├── database.py        
+│   │   ├── dependencies.py    
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── routes
+│   │   │   ├── __init__.py    
+│   │   │   ├── __pycache__    
+│   │   │   ├── appointments.py
+│   │   │   ├── assistant.py   
+│   │   │   ├── doctors.py     
+│   │   │   ├── patients.py    
+│   │   │   ├── schedule.py    
+│   │   │   └── users.py
+│   │   ├── schemas.py
+│   │   ├── static
+│   │   │   ├── Background.webp
+│   │   │   ├── account.css
+│   │   │   ├── appointment.css
+│   │   │   ├── contacts.css
+│   │   │   ├── login.css
+│   │   │   ├── main.css
+│   │   │   └── style.css
+│   │   └── templates
+│   │       ├── account.html
+│   │       ├── appointment.html
+│   │       ├── contacts.html
+│   │       ├── index.html
+│   │       ├── login.html
+│   │       ├── patient_appointments.html
+│   │       └── register.html
+│   ├── requirements.txt
+│   └── venv
 └── docker-compose.yml
 ```
 ---
@@ -37,7 +49,7 @@
 ### Корень проекта
 
 - **README.md**  
-  Документация проекта — описание, инструкции по запуску и т.п.
+  Документация.
 
 - **docker-compose.yml**  
   Конфигурация для запуска контейнеров Docker (backend, БД и др.).
@@ -58,9 +70,6 @@
 
 - **`__init__.py`**  
   Позволяет Python трактовать папку как пакет. (Для других файлов)
-
-- **`__pycache__/`**  
-  Кэш скомпилированных Python-файлов (pyc).
 
 - **auth.py**  
   Логика аутентификации, генерация и проверка токенов.
@@ -85,12 +94,6 @@
 
 ### Папка `routes`
 
-- **`__init__.py`**  
-  Пакет маршрутов (роутов).
-
-- **`__pycache__/`**  
-  Кэш скомпилированных Python-файлов.
-
 - **appointments.py**  
   Маршруты для работы с приёмами пациентов.
 
@@ -110,35 +113,11 @@
 
 ### Папка `static`
 
-- **style.css**  
-  Стили для фронтенд-страниц. (Сейчас не используется)
+  Стили для фронтенд-страниц.
 
 ---
 
 ### Папка `templates`
-
-- **index.html**  
-  Главная страница приложения.
-
-- **login.html**  
-  Страница логина.
-
-- **register.html**  
-  Страница регистрации.
-
-- **patient_appointments.html**  
-  Страница с расписанием и приёмами пациента.
-
----
-
-## Текущий этап разработки
-
-- Реализованы страницы **логина** и **регистрации**.
-Вход:
-![alt text](login.png)
-Регистрация:
-![alt text](registration.png)
-- При логине в ответ приходит **access token**, но сессия пока не сохраняется — требуется реализовать полноценное управление сессиями (cookies или token storage).
-- Далее планируется доработка механизма сессий и расширение функционала.
+  Совместно с папкой `static` - фронтенд.
 
 ---
