@@ -6,11 +6,17 @@ from sqlalchemy import (
     ForeignKey,
     Time,
     DateTime,
-    Boolean,
+    Enum,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
-from datetime import datetime, time
+import enum
+
+
+class AppointmentStatus(str, enum.Enum):
+    scheduled = "scheduled"
+    completed = "completed"
+    cancelled = "cancelled"
 
 
 class Schedule(Base):
@@ -22,7 +28,7 @@ class Schedule(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
 
-    doctor = relationship("Doctor", backref="schedule")
+    doctor = relationship("Doctor", back_populates="schedules")
 
 
 class Appointment(Base):
@@ -31,21 +37,24 @@ class Appointment(Base):
     id = Column(Integer, primary_key=True, index=True)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=False)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    scheduled_time = Column(DateTime, nullable=False)
-    status = Column(String, default="scheduled")
+    appointment_time = Column(DateTime, nullable=False)
+    status = Column(
+        Enum(AppointmentStatus), default=AppointmentStatus.scheduled, nullable=False
+    )
 
-    doctor = relationship("Doctor", backref="appointments")
-    patient = relationship("Patient", backref="appointments")
+    doctor = relationship("Doctor", back_populates="appointments")
+    patient = relationship("Patient", back_populates="appointments")
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     role = Column(String, nullable=False)
+    password_hash = Column(String, nullable=False)
+    date_of_birth = Column(Date, nullable=True)
 
     doctor = relationship("Doctor", back_populates="user", uselist=False)
     patient = relationship("Patient", back_populates="user", uselist=False)
@@ -60,6 +69,8 @@ class Doctor(Base):
     room_number = Column(String, nullable=False)
 
     user = relationship("User", back_populates="doctor")
+    appointments = relationship("Appointment", back_populates="doctor")
+    schedules = relationship("Schedule", back_populates="doctor")
 
 
 class Patient(Base):
@@ -71,3 +82,4 @@ class Patient(Base):
     date_of_birth = Column(Date, nullable=False)
 
     user = relationship("User", back_populates="patient")
+    appointments = relationship("Appointment", back_populates="patient")
